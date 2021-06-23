@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import gherkin.lexer.Th;
 import io.cucumber.java.DataTableType;
+import io.cucumber.java.en_old.Ac;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.math3.analysis.function.Exp;
 import org.junit.Assert;
@@ -71,11 +72,15 @@ public class stepDefinitions extends BaseClass  {
     public WebDriverWait ninetyfive;
     public WebDriverWait onehundred;
     public WebDriverWait twohundred;
+    public Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+    public Actions actions;
 
 
 
     public static sharedatastep sharedata;
-    public String ReferenceNumber = "IA000000046";
+    public String ReferenceNumber = "MANP/000002433/2020";
+    public String PenaltyCode = "";
+    public String FineCode = "";
 
     public stepDefinitions(sharedatastep sharedata) {
 
@@ -89,6 +94,7 @@ public class stepDefinitions extends BaseClass  {
         FileInputStream fls = new FileInputStream("src\\test\\resources\\global.properties");
         Pro.load(fls);
         driver = BaseClass.getDriver();
+        actions = new Actions(driver);
         five = new WebDriverWait(driver, 5);
         ten = new WebDriverWait(driver, 10);
         fifteen = new WebDriverWait(driver, 15);
@@ -246,12 +252,10 @@ public class stepDefinitions extends BaseClass  {
     }
 
 
-    @And("Click on debt management > Installment agreements > Create installment agreement")
-    public void clickOnDebtManagementInstallmentAgreementsCreateInstallmentAgreement() throws InterruptedException {
-        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[span='Debt Management']"))).click();
-        driver.findElement(By.xpath("//a[span='Instalment Agreements']")).click();
-        Thread.sleep(1000);
-        driver.findElement(By.xpath("//*[@id=\"sub1\"]/ul/li[1]/a")).click();
+    @And("Click on compliance and enforcement > Perform tax compliance processing")
+    public void clickOnComplianceUrl() throws InterruptedException {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[span='Compliance and Enforcement']"))).click();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[span='Configure Penalty Rules']"))).click();
     }
 
     @Then("^Click reporting > reports$")
@@ -299,12 +303,12 @@ public class stepDefinitions extends BaseClass  {
     @Then("^approve transaction$")
     public void approve_transaction() throws Throwable {
 
-        onehundred.until(ExpectedConditions.visibilityOfElementLocated(By.id("WebResource_DebtManagementApplicationAngular")));
-        driver.switchTo().frame("WebResource_DebtManagementApplicationAngular");
+        onehundred.until(ExpectedConditions.visibilityOfElementLocated(By.id("WebResource_EnforcementApplicationAngular")));
+        driver.switchTo().frame("WebResource_EnforcementApplicationAngular");
         Thread.sleep(3000);
 
         WebDriverWait wait = new WebDriverWait(driver, 120);
-        WebElement downloadAttach = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//label[text()='Instalment Agreement Number:']")));
+        WebElement downloadAttach = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//label[text()='Tax Office']")));
         Assert.assertTrue(downloadAttach.isDisplayed());
 
         driver.switchTo().defaultContent();
@@ -314,15 +318,14 @@ public class stepDefinitions extends BaseClass  {
         Thread.sleep(5000);
 
         driver.findElement(By.xpath("//div[@data-attributename='tbg_approvaloutcome']")).click();
-        Actions action = new Actions(driver);
-        action.sendKeys(Keys.ARROW_DOWN).sendKeys(Keys.ENTER).perform();
+        actions.sendKeys(Keys.ARROW_DOWN).sendKeys(Keys.ENTER).perform();
         driver.switchTo().defaultContent();
     }
 
     @Then("reject transaction after text {string} loads")
     public void rejectTransactionAfterTextLoads(String text) throws InterruptedException {
-        onehundred.until(ExpectedConditions.visibilityOfElementLocated(By.id("WebResource_DebtManagementApplicationAngular")));
-        driver.switchTo().frame("WebResource_DebtManagementApplicationAngular");
+        onehundred.until(ExpectedConditions.visibilityOfElementLocated(By.id("WebResource_EnforcementApplicationAngular")));
+        driver.switchTo().frame("WebResource_EnforcementApplicationAngular");
         Thread.sleep(3000);
 
         WebDriverWait wait = new WebDriverWait(driver, 120);
@@ -353,7 +356,7 @@ public class stepDefinitions extends BaseClass  {
     @Then("^Click save CRM$")
     public void ClickSaveCRM() throws Throwable {
         driver.switchTo().defaultContent();
-        driver.findElement(By.id("tbg_debtmanagementapplication|NoRelationship|Form|Mscrm.Form.tbg_debtmanagementapplication.Save")).click();
+        driver.findElement(By.id("tbg_enforcementapplication|NoRelationship|Form|Mscrm.Form.tbg_enforcementapplication.Save")).click();
         driver.manage().timeouts().implicitlyWait(20, TimeUnit.SECONDS);
     }
 
@@ -445,6 +448,438 @@ public class stepDefinitions extends BaseClass  {
     @Then("Click cancel to abandon report")
     public void clickCancelToAbandonReport() {
         ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("frmReportDetails:btnCancel"))).click();
+    }
+
+    @And("Click on compliance and enforcement > Configure penalty rules")
+    public void clickOnComplianceAndEnforcementConfigurePenaltyRules() throws InterruptedException {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[span='Compliance and Enforcement']"))).click();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[span='Configure Penalty Rules']"))).click();
+        Thread.sleep(1000);
+    }
+
+    @Then("Click on Create new button")
+    public void clickOnCreateNewButton() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:j_id13"))).click();
+    }
+
+    @Then("Enter penalty code as current timestamp")
+    public void enterPenaltyCodeAsCurrentTimestamp() throws InterruptedException {
+        Thread.sleep(2000);
+        PenaltyCode = String.valueOf(timestamp.getTime());
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:penaltyCode"))).clear();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:penaltyCode"))).sendKeys(PenaltyCode);
+    }
+
+    @Then("Enter description as {string}")
+    public void enterDescriptionAs(String description) {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:description"))).sendKeys(description);
+    }
+
+    @Then("Select taxtype to configure compliance for as {string}")
+    public void selectTaxtypeToConfigureComplianceForAs(String taxtype) throws InterruptedException {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//td[text()='" + taxtype + "']"))).click();
+        Thread.sleep(1000);
+        driver.findElement(By.xpath("//*[@id=\"penaltyRuleConfigurationForm:taxTypes\"]/div[2]/div/button[1]")).click();
+        Thread.sleep(1000);
+    }
+
+    @Then("Enter minimum amount as {string}")
+    public void enterMinimumAmountAs(String amount) {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:minimumAmount_input"))).sendKeys(amount);
+    }
+
+    @Then("Enter maximum amount as {string}")
+    public void enterMaximumAmountAs(String amount) {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:maximumAmount_input"))).sendKeys(amount);
+    }
+
+    @Then("Select penalty type {string}")
+    public void selectPenaltyType(String penaltyType) throws InterruptedException {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"penaltyRuleConfigurationForm:penaltyUnitType\"]/div[3]"))).click();
+        Thread.sleep(1500);
+        Actions action = new Actions(driver);
+        action.sendKeys(Keys.ARROW_DOWN).sendKeys(Keys.ENTER).perform();
+    }
+
+    @Then("Click save")
+    public void clickSave() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:save"))).click();
+    }
+
+    @Then("Click logout")
+    public void clickLogout() throws InterruptedException {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("Logout"))).click();
+        Thread.sleep(1500);
+    }
+
+    @Then("Search for penalty code")
+    public void searchForPenaltyCode() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:PenaltyCode"))).sendKeys(PenaltyCode);
+        driver.findElement(By.id("SearchForm:j_idt42")).click();
+        fifteen.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//label[text()='"+ PenaltyCode +"']"))).isDisplayed();
+        driver.findElement(By.id("SearchForm:j_id14")).click();
+    }
+
+    @Then("Change minimum amount to {string}")
+    public void changeMinimumAmountTo(String amount) {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:minimumAmount_input"))).clear();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:minimumAmount_input"))).sendKeys(amount);
+    }
+
+    @Then("Search for penalty code to view")
+    public void searchForPenaltyCodeToView() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:PenaltyCode"))).clear();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:PenaltyCode"))).sendKeys(PenaltyCode);
+        driver.findElement(By.id("SearchForm:j_idt42")).click();
+        fifteen.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//label[text()='"+ PenaltyCode +"']"))).isDisplayed();
+        driver.findElement(By.id("SearchForm:j_id14")).click();
+    }
+
+    @Then("Click view to view penalty code")
+    public void clickViewToViewPenaltyCode() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:j_id15"))).click();
+
+    }
+
+    @Then("Verify code and readonly")
+    public void verifyCodeAndReadonly() {
+        WebElement codeElement = twenty.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:penaltyCode")));
+        String code = codeElement.getAttribute("value");
+        if(code.equals(PenaltyCode)){
+            Assert.assertTrue("View screen is valid",true);
+        }
+        else{
+            Assert.fail("Invalid view screen");
+        }
+    }
+
+    @Then("Enter penalty code as previous")
+    public void enterPenaltyCodeAsPrevious() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:penaltyCode"))).sendKeys(PenaltyCode);
+    }
+
+    @And("Search for penalty code using invalid data")
+    public void searchForPenaltyCodeUsingInvalidData() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:PenaltyCode"))).sendKeys("AbRACADABRA");
+        driver.findElement(By.id("SearchForm:j_idt42")).click();
+    }
+
+    @Then("Enter new penalty code as current timestamp")
+    public void enterNewPenaltyCodeAsCurrentTimestamp() {
+
+
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:penaltyCode"))).clear();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("penaltyRuleConfigurationForm:penaltyCode"))).sendKeys(PenaltyCode+"1");
+    }
+
+    @And("Click on compliance and enforcement > Configure fine rules")
+    public void clickOnComplianceAndEnforcementConfigureFineRules() throws InterruptedException {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[span='Compliance and Enforcement']"))).click();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[span='Configure Fine Rules']"))).click();
+        Thread.sleep(1000);
+    }
+
+    @Then("Enter fine code as current timestamp")
+    public void enterFineCodeAsCurrentTimestamp() throws InterruptedException {
+        Thread.sleep(2000);
+        FineCode = String.valueOf(timestamp.getTime());
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:fineCode"))).clear();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:fineCode"))).sendKeys(FineCode);
+    }
+
+    @Then("Enter fine rule description as {string}")
+    public void enterFineRuleDescriptionAs(String description) {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:description"))).sendKeys(description);
+    }
+
+    @Then("Select taxtype to configure fine rule for as {string}")
+    public void selectTaxtypeToConfigureFineRuleForAs(String taxtype) throws InterruptedException {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//td[text()='" + taxtype + "']"))).click();
+        Thread.sleep(1000);
+        driver.findElement(By.xpath("//*[@id=\"fineRuleConfigurationForm:taxTypes\"]/div[2]/div/button[1]")).click();
+        Thread.sleep(1000);
+    }
+
+    @Then("Enter minimum fine amount as {string}")
+    public void enterMinimumFineAmountAs(String amount) {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:minimumAmount_input"))).sendKeys(amount);
+    }
+
+    @Then("Enter legal reference as {string}")
+    public void enterLegalReferenceAs(String reference) {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:legalReference"))).sendKeys(FineCode);
+    }
+
+    @Then("Enter maximum fine amount as {string}")
+    public void enterMaximumFineAmountAs(String amount) {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:maximumAmount_input"))).sendKeys(amount);
+    }
+
+    @Then("Select fine unit type {string}")
+    public void selectFineUnitType(String arg0) throws InterruptedException {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"fineRuleConfigurationForm:penaltyUnitType\"]/div[3]"))).click();
+        Thread.sleep(1500);
+        Actions action = new Actions(driver);
+        action.sendKeys(Keys.ARROW_DOWN).sendKeys(Keys.ENTER).perform();
+    }
+
+    @Then("Click save for fine")
+    public void clickSaveForFine() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:save"))).click();
+    }
+
+    @Then("Search for fine code")
+    public void searchForFineCode() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:FineCode"))).sendKeys(FineCode);
+        driver.findElement(By.id("SearchForm:j_idt42")).click();
+        fifteen.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//label[text()='"+ FineCode +"']"))).isDisplayed();
+        driver.findElement(By.id("SearchForm:j_id14")).click();
+    }
+
+    @Then("Change fine minimum amount to {string}")
+    public void changeFineMinimumAmountTo(String amount) {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:minimumAmount_input"))).clear();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:minimumAmount_input"))).sendKeys(amount);
+    }
+
+    @And("Search for fine code using invalid data")
+    public void searchForFineCodeUsingInvalidData() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:FineCode"))).sendKeys("AbRACADABRA");
+        driver.findElement(By.id("SearchForm:j_idt42")).click();
+    }
+
+    @Then("Search for fine code to view")
+    public void searchForFineCodeToView() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:FineCode"))).clear();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:FineCode"))).sendKeys(FineCode);
+        driver.findElement(By.id("SearchForm:j_idt42")).click();
+        fifteen.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//label[text()='"+ FineCode +"']"))).isDisplayed();
+        driver.findElement(By.id("SearchForm:j_id14")).click();
+    }
+
+    @Then("Click view to view fine code")
+    public void clickViewToViewFineCode() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:j_id15"))).click();
+    }
+
+    @Then("Verify fine code and readonly")
+    public void verifyFineCodeAndReadonly() {
+        WebElement codeElement = twenty.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:fineCode")));
+        String code = codeElement.getAttribute("value");
+        if(code.equals(FineCode)){
+            Assert.assertTrue("View screen is valid",true);
+        }
+        else{
+            Assert.fail("Invalid view screen");
+        }
+    }
+
+    @Then("Enter fine code as previous")
+    public void enterFineCodeAsPrevious() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:fineCode"))).sendKeys(FineCode);
+    }
+
+    @Then("Enter new fine code as current timestamp")
+    public void enterNewFineCodeAsCurrentTimestamp() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:fineCode"))).clear();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("fineRuleConfigurationForm:fineCode"))).sendKeys(FineCode+"1");
+    }
+
+    @And("Click on compliance and enforcement > Manual fines")
+    public void clickOnComplianceAndEnforcementManualFines() {
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[span='Compliance and Enforcement']"))).click();
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[span='Manual Fines']"))).click();
+    }
+
+    @Then("find taxpayer to create fine for with tin {string}")
+    public void findTaxpayerToCreateFineForWithTin(String tin) throws Throwable{
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("ManualFine:FindTin"))).click();
+        WebElement frame = ten.until(ExpectedConditions.visibilityOfElementLocated(By.tagName("iframe")));
+        driver.switchTo().frame(frame);
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:accountNumber"))).clear();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:accountNumber"))).sendKeys(tin);
+        driver.findElement(By.id("SearchForm:j_idt21")).click();
+        Thread.sleep(3000);
+    }
+
+    @Then("select taxtype {string}")
+    public void selectTaxtype(String taxtype) throws Throwable {
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"ManualFine:fineTaxType\"]/div[3]"))).click();
+        Thread.sleep(1500);
+        driver.findElement(By.xpath("//li[contains(text(),'" + taxtype + "')]")).click();
+        actions.sendKeys(Keys.TAB).perform();
+    }
+
+    @Then("select return type")
+    public void selectReturnType() throws InterruptedException {
+        Thread.sleep(1500);
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"ManualFine:fineReturnType\"]/div[3]"))).click();
+        Thread.sleep(1500);
+        actions.sendKeys(Keys.ARROW_DOWN).sendKeys(Keys.ENTER).perform();
+    }
+
+    @Then("select fine code as {string}")
+    public void selectFineCodeAs(String code) throws InterruptedException {
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"ManualFine:fineCode\"]/div[3]"))).click();
+        Thread.sleep(1500);
+        driver.findElement(By.xpath("//li[contains(text(),'" + code + "')]")).click();
+        actions.sendKeys(Keys.TAB).perform();
+    }
+
+    @Then("Enter manual fine amount {string}")
+    public void enterManualFineAmount(String amount) {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("ManualFine:amount_input"))).sendKeys(amount);
+    }
+
+    @Then("Select manual fine date as today")
+    public void selectManualFineDateAsToday() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("ManualFine:fineDate_input"))).sendKeys(Keys.ENTER);
+        actions.sendKeys(Keys.TAB).perform();
+    }
+
+    @Then("Select manual fine period")
+    public void selectManualFinePeriod() throws InterruptedException {
+        Thread.sleep(1500);
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"ManualFine:finePeriod\"]/div[3]"))).click();
+        Thread.sleep(1500);
+        actions.sendKeys(Keys.ARROW_DOWN).sendKeys(Keys.ENTER).perform();
+    }
+
+    @Then("Submit manual fine")
+    public void submitManualFine() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("ManualFine:save"))).click();
+    }
+
+    @Then("Extract manual fine arn number {string}")
+    public void extractManualFineArnNumber(String success) throws InterruptedException {
+        WebDriverWait wait = new WebDriverWait(driver,100);
+        String text  = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[contains(text(),'"+success+"')]"))).getText();
+        //Manual Fine saved successfully. MANP/000003252/2021
+        System.out.println(text);
+        System.out.println("substring is "+ text.substring(32));
+        ReferenceNumber =text.substring(32);
+
+        System.out.println(ReferenceNumber);
+        System.out.println("Actual ARN to be used in CRM is " +ReferenceNumber);
+
+        Thread.sleep(5000);
+    }
+
+    @Then("Click on enforcement application link")
+    public void clickOnEnforcementApplicationLink() throws InterruptedException {
+        thirty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(Pro.getProperty("Cases_Management_Dropdown_XPATH")))).click();
+
+        Thread.sleep(2000);
+        driver.findElement(By.id(Pro.getProperty("Enforcement_Application_ID"))).click();
+    }
+
+    @Then("Manual fine status should be {string}")
+    public void manualFineStatusShouldBe(String status) throws InterruptedException {
+        WebDriverWait wait = new WebDriverWait(driver,200);
+        WebElement statusLabel = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//label[contains(text(),'" + status + "')]")));
+
+        if (statusLabel.isDisplayed()) {
+            Assert.assertTrue("Approved", true);
+        } else {
+            Assert.fail("Approval failed");
+        }
+        Thread.sleep(2000);
+    }
+
+    @And("Click on compliance and enforcement > Manual penalties")
+    public void clickOnComplianceAndEnforcementManualPenalties() {
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[span='Compliance and Enforcement']"))).click();
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[span='Manual Penalties']"))).click();
+    }
+
+    @Then("find taxpayer to create penalty for with tin {string}")
+    public void findTaxpayerToCreatePenaltyForWithTin(String tin) throws InterruptedException {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("ManualPenalty:FindTin"))).click();
+        WebElement frame = ten.until(ExpectedConditions.visibilityOfElementLocated(By.tagName("iframe")));
+        driver.switchTo().frame(frame);
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:accountNumber"))).clear();
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("SearchForm:accountNumber"))).sendKeys(tin);
+        driver.findElement(By.id("SearchForm:j_idt21")).click();
+        Thread.sleep(3000);
+    }
+
+    @Then("Submit manual penalty")
+    public void submitManualPenalty() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("ManualPenalty:save"))).click();
+    }
+
+    @Then("Select penalty type")
+    public void selectPenaltyType() throws InterruptedException {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"ManualPenalty:penaltyType\"]/div[3]"))).click();
+        Thread.sleep(1500);
+        Actions action = new Actions(driver);
+        action.sendKeys(Keys.ARROW_DOWN).sendKeys(Keys.ENTER).perform();
+    }
+
+    @Then("select taxtype for penalty {string}")
+    public void selectTaxtypeForPenalty(String taxtype) throws InterruptedException {
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"ManualPenalty:penaltyTaxType\"]/div[3]"))).click();
+        Thread.sleep(1500);
+//        driver.findElement(By.xpath("//li[contains(text(),'" + taxtype + "')]")).click();
+//        actions.sendKeys(Keys.TAB).perform();
+        actions.sendKeys(Keys.ARROW_DOWN).sendKeys(Keys.ENTER).perform();
+    }
+
+    @Then("select return type for penalty")
+    public void selectReturnTypeForPenalty() throws InterruptedException {
+        Thread.sleep(1500);
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"ManualPenalty:penaltyReturnType\"]/div[3]"))).click();
+        Thread.sleep(1500);
+        actions.sendKeys(Keys.ARROW_DOWN).sendKeys(Keys.ENTER).perform();
+    }
+
+    @Then("select penalty code as {string}")
+    public void selectPenaltyCodeAs(String code) throws InterruptedException {
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"ManualPenalty:penaltyCode\"]/div[3]"))).click();
+        Thread.sleep(1500);
+        driver.findElement(By.xpath("//li[contains(text(),'" + code + "')]")).click();
+        actions.sendKeys(Keys.TAB).perform();
+    }
+
+    @Then("Enter manual penalty amount {string}")
+    public void enterManualPenaltyAmount(String amount) {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("ManualPenalty:amount_input"))).sendKeys(amount);
+    }
+
+    @Then("Select manual penalty date as today")
+    public void selectManualPenaltyDateAsToday() {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("ManualPenalty:penaltyDate_input"))).sendKeys(Keys.ENTER);
+        actions.sendKeys(Keys.TAB).perform();
+    }
+
+    @Then("Select manual penalty period")
+    public void selectManualPenaltyPeriod() throws InterruptedException {
+        Thread.sleep(1500);
+        twenty.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"ManualPenalty:penaltyPeriod\"]/div[3]"))).click();
+        Thread.sleep(1500);
+        actions.sendKeys(Keys.ARROW_DOWN).sendKeys(Keys.ENTER).perform();
+    }
+
+    @Then("Extract manual penalty arn number {string}")
+    public void extractManualPenaltyArnNumber(String success) throws InterruptedException {
+        WebDriverWait wait = new WebDriverWait(driver,100);
+        String text  = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[contains(text(),'"+success+"')]"))).getText();
+        //Manual Penalty saved successfully. MANP/000003252/2021
+        System.out.println(text);
+        System.out.println("substring is "+ text.substring(35));
+        ReferenceNumber =text.substring(35);
+
+        System.out.println(ReferenceNumber);
+        System.out.println("Actual ARN to be used in CRM is " +ReferenceNumber);
+
+        Thread.sleep(5000);
+    }
+
+    @Then("Enter start date as {string}")
+    public void enterStartDateAs(String date) throws InterruptedException {
+        ten.until(ExpectedConditions.visibilityOfElementLocated(By.id("frmReportDetails:StartDate_input"))).sendKeys(date);
+        Thread.sleep(1500);
+        actions.sendKeys(Keys.TAB).perform();
     }
 }
 
